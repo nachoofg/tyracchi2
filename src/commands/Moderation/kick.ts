@@ -1,18 +1,22 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Args, Command } from '@sapphire/framework';
 import type { Message } from 'discord.js';
+import type { PyraCommandOptions } from '#root/typings/index.js';
 
-@ApplyOptions<Command.Options>({
+
+@ApplyOptions<PyraCommandOptions>({
 	description: 'Kick a member.',
 	aliases: [],
 	requiredUserPermissions: ['KickMembers'],
-	requiredClientPermissions: ['KickMembers']
+	requiredClientPermissions: ['KickMembers'],
+	usage: ";kick <member> [reason]",
+	examples: [';kick @pepe', ';kick @pepe because yes']
 })
 export class UserCommand extends Command {
 	public override async messageRun(message: Message, args: Args) {
 		try {
 			const member = await args.pick('member'); // ;kick {member}=mention/id [reason] :: ;kick @ebon por puto -> nacho
-			const reason = args.finished ? 'No reason has been entered.' : await args.pick('string');
+			const reason = args.finished ? 'No reason has been entered.' : await args.rest('string');
 
 			// true ? false : true
 

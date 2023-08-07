@@ -1,39 +1,67 @@
 import { ApplyOptions } from '@sapphire/decorators';
-import { Command, MessageCommand } from '@sapphire/framework';
-import { EmbedBuilder, Message } from 'discord.js';
+import { Args, Command } from '@sapphire/framework';
+import { EmbedBuilder, type Message } from 'discord.js';
+import type { PyraCommandOptions } from '#root/typings/index.js';
+import type PyraCommandExtends from '#root/extensions/Command.js';
 
-@ApplyOptions<Command.Options>({
+@ApplyOptions<PyraCommandOptions>({
 	description: 'Show the commands of the bot.',
-	aliases: ['commands']
+	aliases: ['commands'],
+	detailedDescription: {
+		usage: ';help [command]',
+		examples: [';help', ';help ban']
+	}
 })
-export class UserCommand extends Command {
-	// @ts-ignore because yes
-	public override async messageRun(message: Message, context: MessageCommand.Context) {
+export class PyraCommand extends Command {
+	public override async messageRun(message: Message, args: Args) {
 		const { client } = this.container;
+		const commandStore = client.stores.get('commands');
 
-		if (!client.stores.has('commands')) {
-			return message.channel.send('Error al obtener la lista de comandos.');
+		if (!commandStore) {
+			return message.channel.send('⚠️ An error occurred while trying to get the commands.');
 		}
 
-		const commandsStore = client.stores.get('commands');
-		const categories: Map<string, Command[]> = new Map();
-
-		commandsStore.forEach((command) => {
-			const categoryName = command.category || 'Sin categoría';
-			const categoryCommands = categories.get(categoryName) || [];
-			categories.set(categoryName, [...categoryCommands, command]);
-		});
 		const embed = new EmbedBuilder()
-			.setColor('#0099ff')
-			.setTitle('Lista de Comandos')
-			.setDescription('Aquí está la lista de comandos disponibles:')
-			.setTimestamp();
+			.setColor('#2B2D31')
+			.setTimestamp()
+			.setFooter({ text: 'type ;help <command> to get extended help about a specific command.' });
 
-		categories.forEach((commands, categoryName) => {
-			const commandList = commands.map((command) => `\`${command.name}\``).join(', ');
-			embed.addFields({ name: categoryName, value: commandList });
-		});
+		if (args.finished) {
+			const categories: Map<string, Command[]> = new Map();
 
-		await message.reply({ embeds: [embed] });
+			for (const command of commandStore.values()) {
+				const categoryName = command.category || 'No category';
+				const categoryCommands = categories.get(categoryName) || [];
+				categories.set(categoryName, [...categoryCommands, command]);
+			}
+
+			for (const [categoryName, commands] of categories.entries()) {
+				const commandList = commands.map((command) => `\`${command.name}\``).join(', ');
+				embed.addFields({ name: categoryName, value: commandList });
+			}
+		} else {
+			const arg = await args.pick('string');
+			const command = commandStore.get(arg.toLowerCase()) as PyraCommandExtends;
+
+			if (!command) {
+				return message.channel.send(`⚠️ The specified command \`${arg}\` does not exist.`);
+			}
+
+			embed
+				.setTitle(`Command ${command.name}`)
+				.setDescription(command.description)
+				.addFields(
+					{ name: 'Category', value: command.category || 'No category' },
+					{ name: 'Aliases', value: command.aliases?.length ? command.aliases.map((alias) => `\`${alias}\``).join(', ') : 'No aliases.' },
+					{
+						name: 'Examples',
+						value: command.examples
+							? command.examples.map((example) => `\`${example}\``).join('\n')
+							: 'No examples provided.'
+					}
+				);
+		}
+
+		return message.reply({ embeds: [embed] });
 	}
 }

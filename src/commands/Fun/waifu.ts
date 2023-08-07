@@ -2,11 +2,13 @@ import { ApplyOptions } from '@sapphire/decorators';
 import { Args, Command } from '@sapphire/framework';
 import type { Message } from 'discord.js';
 import { getWaifu } from '../../api/functions/getWaifu.js';
+import type { PyraCommandOptions } from '#root/typings/index.js';
 
-@ApplyOptions<Command.Options>({
+
+@ApplyOptions<PyraCommandOptions>({
 	description: 'Show a waifu',
 	aliases: ['w', 'wa'],
-	enabled: true
+	usage: ';waifu [id]'
 })
 export class UserCommand extends Command {
 	public override async messageRun(message: Message, args: Args) {
