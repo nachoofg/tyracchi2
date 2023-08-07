@@ -8,8 +8,8 @@ node_modules/
 .yarn/build-state.yml
 
 # Environment variables
-.env.local
-.env.development.local
+.env
+.env.development
 .env.production.local
 .env.test.local
 
