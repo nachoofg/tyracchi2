@@ -1,0 +1,26 @@
+# Ignore a blackhole and the folder for development
+node_modules/
+.idea/
+.vs/
+
+# Yarn files
+.yarn/install-state.gz
+.yarn/build-state.yml
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.development
+.env.production.local
+.env.test.local
+
+# Ignore bwd folders
+dist/
+
+# Ignore heapsnapshot and log files
+*.heapsnapshot
+*.log
+
+# Ignore package locks
+package-lock.json
